@@ -4,7 +4,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Date;
+import java.util.Scanner;
 
 /*
  * client:
@@ -17,25 +17,32 @@ public class Client {
 
 	public static void main(String[] args) {
 		Socket socket = null;
-		Date date = new Date();
 		InputStream is = null;
 		OutputStream os = null;
+		Scanner in = new Scanner(System.in);
 
 		try {
-			socket = new Socket(InetAddress.getByName("127.0.0.1"), 8001);
+			socket = new Socket(InetAddress.getByName("127.0.0.1"), 8002);
 			is = socket.getInputStream();
 			os = socket.getOutputStream();
 
-			os.write(date.toString().getBytes());
-			byte[] buffer = new byte[1024];
-			int length = is.read(buffer);
-			System.out.println("服务器的反馈是: " + new String(buffer, 0, length));
+			String buffer;
+			byte[] receiveData = new byte[1024];
+
+			while (in.hasNext()) {
+				buffer = in.next();
+				os.write(buffer.getBytes(), 0, buffer.getBytes().length);
+				int count = is.read(receiveData);
+				System.out.println("client: "
+						+ new String(receiveData, 0, count));
+			}
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
+				in.close();
 				socket.close();
 				is.close();
 				os.close();
@@ -43,5 +50,6 @@ public class Client {
 				e.printStackTrace();
 			}
 		}
+
 	}
 }
