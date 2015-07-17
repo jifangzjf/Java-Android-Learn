@@ -1,40 +1,38 @@
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Scanner;
 
 /*
- * client:
- * 	1. 获取系统时间
- * 	2. 给Server发送消息
- *  3. 从Server接受反馈
- *  4. 将反馈打印到屏幕
+ * 主线程:
+ *  建立连接
+ * 	从键盘读取数据, 发送到服务器
  */
 public class Client {
 
 	public static void main(String[] args) {
-		Socket socket = null;
-		InputStream is = null;
-		OutputStream os = null;
-		Scanner in = new Scanner(System.in);
-
+		Socket socket = new Socket();
+		BufferedReader reader = null;
+		PrintStream writer = null;
 		try {
-			socket = new Socket(InetAddress.getByName("127.0.0.1"), 8002);
-			is = socket.getInputStream();
-			os = socket.getOutputStream();
+			// 连接到服务器
+			socket.connect(
+					new InetSocketAddress(InetAddress.getByName("127.0.0.1"),
+							8001), 1000);
+			// 开启读取数据线程
+			new Thread(new ClientRunnable(socket)).start();
+			reader = new BufferedReader(new InputStreamReader(System.in));
+			writer = new PrintStream(socket.getOutputStream());
 
-			String buffer;
-			byte[] receiveData = new byte[1024];
-
-			while (in.hasNext()) {
-				buffer = in.next();
-				os.write(buffer.getBytes(), 0, buffer.getBytes().length);
-				int count = is.read(receiveData);
-				System.out.println("client: "
-						+ new String(receiveData, 0, count));
+			// 从键盘读取数据
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				// 写到服务器
+				writer.println(line);
 			}
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -42,14 +40,12 @@ public class Client {
 			e.printStackTrace();
 		} finally {
 			try {
-				in.close();
 				socket.close();
-				is.close();
-				os.close();
+				reader.close();
+				writer.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-
 	}
 }
