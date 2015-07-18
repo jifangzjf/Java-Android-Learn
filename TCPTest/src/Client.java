@@ -19,7 +19,6 @@ public class Client {
 		BufferedReader reader = null;
 		PrintStream writer = null;
 		try {
-			// 连接到服务器
 			socket.connect(
 					new InetSocketAddress(InetAddress.getByName("127.0.0.1"),
 							8001), 1000);
